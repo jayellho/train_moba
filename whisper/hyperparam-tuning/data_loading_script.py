@@ -10,6 +10,30 @@ import json
 import tempfile
 import random
 
+# ======================= EDIT VARS BELOW HERE AS NEEDED ================================
+_CITATION = """\
+"""
+
+_CHANNEL_CONFIGS = sorted([
+    "Diff Room Audio", "Same Room Audio"
+])
+
+_GENDER_CONFIGS = sorted(["F", "M"])
+
+# _RACE_CONFIGS = sorted(["CHINESE", "MALAY", "INDIAN", "OTHERS"])
+_RACE_CONFIGS = sorted(["CHINESE", "INDIAN"]) #"MALAY",
+
+_HOMEPAGE = "https://www.imda.gov.sg/how-we-can-help/national-speech-corpus"
+
+_LICENSE = ""
+
+_PATH_TO_DATA = './data/PART4'
+
+# set the maximum length of spliced clips
+INTERVAL_MAX_LENGTH = 25
+
+# ======================= EDIT VARS ABOVE HERE AS NEEDED ================================
+
 '''
 Function to remove annotations and punctuations in text. 
 Accepts a string and outputs a string after formmatting.
@@ -166,30 +190,6 @@ Summary of Part 4 data organisation:
     /Scripts Diff Room: Orthographic transcripts saved in TextGrid format 
     /Audio Diff Room: Audio files in WAV format recorded using the mobile phone, sampled at 16kHz
 """
-
-_CITATION = """\
-"""
-
-_CHANNEL_CONFIGS = sorted([
-    "Diff Room Audio", "Same Room Audio"
-])
-
-_GENDER_CONFIGS = sorted(["F", "M"])
-
-# _RACE_CONFIGS = sorted(["CHINESE", "MALAY", "INDIAN", "OTHERS"])
-_RACE_CONFIGS = sorted(["CHINESE", "INDIAN"]) #"MALAY",
-
-_HOMEPAGE = "https://www.imda.gov.sg/how-we-can-help/national-speech-corpus"
-
-_LICENSE = ""
-
-# _PATH_TO_DATA = '/media/vest1/SecureUSB/IMDA - National Speech Corpus/PART3'
-# _PATH_TO_DATA = './PART1/DATA'
-_PATH_TO_DATA = '/home/hice1/jho88/scratch/git/train_moba/whisper/hyperparam-tuning/data/PART4'
-
-# set the maximum length of spliced clips
-INTERVAL_MAX_LENGTH = 25
-
 class PART4Config(datasets.BuilderConfig):
     """BuilderConfig"""
 
@@ -342,11 +342,11 @@ class PART4Dataset(datasets.GeneratorBasedBuilder):
         for mic in mics:
             audio_path = ''
             room = " ".join(mic.split(" ")[:2]) + " Scripts"
-            # print("ROOM NAME: {}".format(room))
+            print("ROOM NAME: {}".format(room))
             for speaker in speaker_ids:
-                # print('SPEAKERIDS', len(speaker_ids))
-                # print('s1',s1)
-                # print('speakerid1 {}'.format(speaker))
+                print('SPEAKERIDS', len(speaker_ids))
+                print('s1',s1)
+                print('speakerid1 {}'.format(speaker))
                 if speaker_metadata[speaker_metadata['Speaker ID']==speaker]['Ethnic Group'].values[0] == 'CHINESE':
                     session_id = str(speaker_metadata[speaker_metadata['Speaker ID']==speaker]['Session ID'].values[0])
                     session_id = session_id.zfill(4)
@@ -437,9 +437,9 @@ class PART4Dataset(datasets.GeneratorBasedBuilder):
                             # print(f"error getting script path, {str(e)}") #maybe can add count to check if the total number of audio is correct 
                             continue
                     
-                # else:
-                #     print("Ethnic Group Doesn't Exist")
-                #     print('SPEAKER ID IS {}'.format(speaker))
+                else:
+                    print("Ethnic Group Doesn't Exist")
+                    print('SPEAKER ID IS {}'.format(speaker))
 
                 # check that audio path exists, else will not open the audio
                 if os.path.exists(audio_path):
@@ -475,7 +475,7 @@ class PART4Dataset(datasets.GeneratorBasedBuilder):
                             
                             # if the interval length is greater than the maximum length, we do not use the interval. (because cannot split the text, so drop it)
                             if (tg[i].xmax-tg[i].xmin) > INTERVAL_MAX_LENGTH:
-                                # print(f"Interval is too long: {tg[i].xmax-tg[i].xmin}")
+                                print(f"Interval is too long: {tg[i].xmax-tg[i].xmin}")
 
                                 # in the case where this interval is the start of a new clip, we just skip the interval
                                 if (tg[i-1].xmax - intervalStart) < 1:
@@ -539,7 +539,7 @@ class PART4Dataset(datasets.GeneratorBasedBuilder):
                                 
                             i+=1
                     except Exception as e:
-                        # print(e)
+                        print(e)
                         continue
                 s1 += 1
-        # print("\nCOMPLETED")
+        print("\nCOMPLETED")

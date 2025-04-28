@@ -10,6 +10,30 @@ import json
 import tempfile
 import random
 
+# ======================= EDIT VARS BELOW HERE AS NEEDED ================================
+_CITATION = """\
+"""
+
+_CHANNEL_CONFIGS = sorted([
+    "Diff Room Audio", "Same Room Audio"
+])
+
+_GENDER_CONFIGS = sorted(["F", "M"])
+
+# _RACE_CONFIGS = sorted(["CHINESE", "MALAY", "INDIAN", "OTHERS"])
+_RACE_CONFIGS = sorted(["CHINESE", "INDIAN"]) #"MALAY",
+
+_HOMEPAGE = "https://www.imda.gov.sg/how-we-can-help/national-speech-corpus"
+
+_LICENSE = ""
+
+_PATH_TO_DATA = './data/PART4'
+
+# set the maximum length of spliced clips
+INTERVAL_MAX_LENGTH = 25
+
+# ======================= EDIT VARS ABOVE HERE AS NEEDED ================================
+
 '''
 Function to remove annotations and punctuations in text. 
 Accepts a string and outputs a string after formmatting.
@@ -166,30 +190,6 @@ Summary of Part 4 data organisation:
     /Scripts Diff Room: Orthographic transcripts saved in TextGrid format 
     /Audio Diff Room: Audio files in WAV format recorded using the mobile phone, sampled at 16kHz
 """
-
-_CITATION = """\
-"""
-
-_CHANNEL_CONFIGS = sorted([
-    "Diff Room Audio", "Same Room Audio"
-])
-
-_GENDER_CONFIGS = sorted(["F", "M"])
-
-# _RACE_CONFIGS = sorted(["CHINESE", "MALAY", "INDIAN", "OTHERS"])
-_RACE_CONFIGS = sorted(["CHINESE", "INDIAN"]) #"MALAY",
-
-_HOMEPAGE = "https://www.imda.gov.sg/how-we-can-help/national-speech-corpus"
-
-_LICENSE = ""
-
-# _PATH_TO_DATA = '/media/vest1/SecureUSB/IMDA - National Speech Corpus/PART3'
-# _PATH_TO_DATA = './PART1/DATA'
-_PATH_TO_DATA = '/home/hice1/jho88/scratch/git/train_moba/whisper/finetune/data/PART4'
-
-# set the maximum length of spliced clips
-INTERVAL_MAX_LENGTH = 25
-
 class PART4Config(datasets.BuilderConfig):
     """BuilderConfig"""
 

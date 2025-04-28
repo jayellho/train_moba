@@ -2,6 +2,20 @@
 
 This repository provides scripts and instructions to hyperparameter-tune and fine-tune OpenAI’s Whisper (large-v3-turbo) model on Singlish conversational speech.
 
+## Datasets:
+- Please ensure they go into the same folder structure as this repository - they are already arranged accordingly.
+- Access here: 
+https://gatech.box.com/s/k7tbfki3meo10w87c7z6gtv6pi3qsdk3
+
+
+## Models:
+- These are finetuned models for your reference if needed.
+- Access here: 
+https://gatech.box.com/s/k7tbfki3meo10w87c7z6gtv6pi3qsdk3
+- To perform your own finetuning, download the Whisper models here onto your machine: https://huggingface.co/openai/whisper-large-v3-turbo
+- Place the model folder and all its contents into the `finetune/models` folder in this repository.
+
+
 ## Prerequisites
 
 - **OS:** Linux / Ubuntu  
@@ -33,7 +47,7 @@ pip install -r requirements.txt
 cd hyperparam-tuning
 
 # Adjust search ranges in whisper_hyperparamtuning.py as needed
-python whisper_hyperparamtuning.py   # Writes trial results to an Optuna .db file
+python whisper_hyperparamtuning.py   # Writes trial results to an SQLite .db file
 python print_db.py                   # Exports results to optuna_trials.xlsx
 ```
 
@@ -59,7 +73,7 @@ torchrun --nproc_per_node=4 --master_port=12345 whisper_finetune.py
 python whisper_finetune.py
 ```
 
-> Outputs are saved under `output/{job_name}` and, if enabled, automatically pushed to the Hugging Face Hub.
+> Outputs are saved under `{output_dir}/{job_name}` and, if enabled, automatically pushed to the HuggingFace Hub.
 
 ## Evaluation
 

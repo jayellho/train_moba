@@ -10,21 +10,7 @@ import json
 import tempfile
 import random
 
-_DESCRIPTION = """\
-PART 4 contains code-switching
-The National Speech Corpus (NSC) is the first large-scale Singapore English corpus 
-spearheaded by the Info-communications and Media Development Authority (IMDA) of Singapore.
-
-Summary of Part 4 data organisation:
-- Codeswitching
-   - Same Room environment, files organized by speaker number:
-    /Scripts Same Room: Orthographic transcripts saved in TextGrid format
-    /Audio Same Room: Audio files in WAV format recorded using the mobile phone mic, sampled at 16kHz
-   - Different Room environment, files organized by speaker number and session number:
-    /Scripts Diff Room: Orthographic transcripts saved in TextGrid format 
-    /Audio Diff Room: Audio files in WAV format recorded using the mobile phone, sampled at 16kHz
-"""
-
+# ======================= EDIT VARS BELOW HERE AS NEEDED ================================
 _CITATION = """\
 """
 
@@ -41,12 +27,12 @@ _HOMEPAGE = "https://www.imda.gov.sg/how-we-can-help/national-speech-corpus"
 
 _LICENSE = ""
 
-# _PATH_TO_DATA = '/media/vest1/SecureUSB/IMDA - National Speech Corpus/PART3'
-# _PATH_TO_DATA = './PART1/DATA'
-_PATH_TO_DATA = './evaluation_data'
+_PATH_TO_DATA = './data/PART4'
 
 # set the maximum length of spliced clips
 INTERVAL_MAX_LENGTH = 25
+
+# ======================= EDIT VARS ABOVE HERE AS NEEDED ================================
 
 '''
 Function to remove annotations and punctuations in text. 
@@ -190,8 +176,20 @@ def read_textgrid(script_path):
 
   
 
+_DESCRIPTION = """\
+PART 4 contains code-switching
+The National Speech Corpus (NSC) is the first large-scale Singapore English corpus 
+spearheaded by the Info-communications and Media Development Authority (IMDA) of Singapore.
 
-
+Summary of Part 4 data organisation:
+- Codeswitching
+   - Same Room environment, files organized by speaker number:
+    /Scripts Same Room: Orthographic transcripts saved in TextGrid format
+    /Audio Same Room: Audio files in WAV format recorded using the mobile phone mic, sampled at 16kHz
+   - Different Room environment, files organized by speaker number and session number:
+    /Scripts Diff Room: Orthographic transcripts saved in TextGrid format 
+    /Audio Diff Room: Audio files in WAV format recorded using the mobile phone, sampled at 16kHz
+"""
 class PART4Config(datasets.BuilderConfig):
     """BuilderConfig"""
 
@@ -284,20 +282,18 @@ class PART4Dataset(datasets.GeneratorBasedBuilder):
         speaker_df = pd.read_excel(path_to_speaker, dtype={'Speaker ID': object}) # read in speaker ID as a string rather than integers
 
         # train-test split the speakers within their gender and race type (to ensure matching proportions)
-        # train_speaker_ids = []
-        # test_speaker_ids = []
-        # for g in gender:
-        #     for r in race:
-        #         X = speaker_df[(speaker_df["Ethnic Group"]==r) & (speaker_df["Gender"]==g)]
-        #         # print("X {}".format(X))
-        #         if len(X) == 0:
-        #             continue
-        #         X_train, X_test = train_test_split(X, test_size=1, random_state=42, shuffle=True)
-        #         train_speaker_ids.extend(X_train["Speaker ID"])
-        #         test_speaker_ids.extend(X_test["Speaker ID"])
-        all_speaker_ids = speaker_df["Speaker ID"].tolist()
-        train_speaker_ids = all_speaker_ids.copy()
-        test_speaker_ids  = all_speaker_ids.copy()
+        train_speaker_ids = []
+        test_speaker_ids = []
+        for g in gender:
+            for r in race:
+                X = speaker_df[(speaker_df["Ethnic Group"]==r) & (speaker_df["Gender"]==g)]
+                # print("X {}".format(X))
+                if len(X) == 0:
+                    continue
+                X_train, X_test = train_test_split(X, test_size=0.3, random_state=42, shuffle=True)
+                train_speaker_ids.extend(X_train["Speaker ID"])
+                test_speaker_ids.extend(X_test["Speaker ID"])
+        
         print("TRAIN: {}".format(train_speaker_ids))
         print("TEST: {}".format(test_speaker_ids))
 
@@ -322,9 +318,9 @@ class PART4Dataset(datasets.GeneratorBasedBuilder):
                 "speaker_metadata":speaker_df,
                 "speaker_ids": test_speaker_ids,
                 # "speaker_ids": ["0003"],
-                "mics": mics,
-                "gender": gender,
-                "race":race,
+                "mics": tuple(mics),
+                "gender": tuple(gender),
+                "race":tuple(race),
                 "dl_manager": dl_manager
             },
         ),

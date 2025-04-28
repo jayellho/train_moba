@@ -6,7 +6,7 @@ import pandas as pd
 from datasets import load_dataset
 from transformers import WhisperProcessor, WhisperForConditionalGeneration
 
-# ================= USER-CONFIGURABLE VARIABLES =================
+# ======================= EDIT VARS BELOW HERE AS NEEDED ================================
 
 # Directory containing subdirectories or model_*.bin files for each fine-tuned model
 MODEL_PARENT_DIR   = "models_to_eval"
@@ -22,13 +22,13 @@ DEVICE        = "cuda"         # or "cpu"
 MAX_SAMPLES   = None           # or an int to limit eval set size
 OUTPUT_EXCEL  = "wer_results_noengspec.xlsx"
 
-# =============================================================
+# ======================= EDIT VARS ABOVE HERE AS NEEDED ================================
 
 def evaluate_model(model_path):
     # Load metric, processor, and model
     wer_metric = evaluate.load("wer")
     processor = WhisperProcessor.from_pretrained(model_path,
-                                                # language="English",
+                                                language="English",
                                                 task="transcribe")
     model = WhisperForConditionalGeneration.from_pretrained(model_path)
     model.config.forced_decoder_ids = None

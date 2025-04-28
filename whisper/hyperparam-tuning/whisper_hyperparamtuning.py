@@ -18,12 +18,27 @@ import huggingface_hub
 import datetime
 import copy
 
+# *************** NOTE: DO EDIT THE ARGUMENTS IN Seq2SeqTrainingArguments IF NEEDED.******************
+# ======================= EDIT VARS BELOW HERE AS NEEDED ================================
+YOUR_HF_TOKEN = '<YOUR HUGGINGFACE TOKEN HERE'
+YOUR_HF_USER_OR_ORG = '<YOUR HF USER OR ORG HERE>'
+model_name_base = "../finetune/models/whisper-large-v3-turbo"
+job_name = "hptune-3"
+output_dir = "./output"
+dataloader_path = "./data_loading_script.py"
+## optuna data space exploration ranges
+learning_rate_range = (1e-6, 1e-4)
+per_device_train_batch_size_range = [16, 32, 64, 128]
+gradient_accumulation_steps_range = [4, 2, 1]
+max_steps_range = [400, 800]
+# ======================= EDIT VARS ABOVE HERE AS NEEDED ================================
 
-model_name_base = "/home/hice1/jho88/scratch/git/train_moba/whisper/finetune/models/whisper-large-v3-turbo"
+# login to huggingface for pushing any models.
+huggingface_hub.login(YOUR_HF_TOKEN) # if this is commented out, run this in CLI first: huggingface-cli login
+
 feature_extractor = WhisperFeatureExtractor.from_pretrained(model_name_base)
 tokenizer = AutoTokenizer.from_pretrained(model_name_base)
 metric = evaluate.load("wer")
-
 
 def prepare_dataset(batch):
     # load and resample audio data from 48 to 16kHz
@@ -79,28 +94,14 @@ def compute_metrics(pred):
 
     return {"wer": wer}
 
-
-
-
-# Set up training arguments
-job_name = "hptune-3"
-
 gc.collect()
 torch.cuda.empty_cache()
-# torch.distributed.init_process_group(backend='nccl', init_method='env://', timeout=datetime.timedelta(seconds=2500000)) #added 
-huggingface_hub.login('<YOUR HUGGINGFACE TOKEN HERE')
-#imda_dataset = load_dataset('racheltlw/imda_part2_c0_test2')
-#imda_dataset = load_dataset('audiofolder', data_dir = 'imda_part2_c0_test2') #load the relevant data here either locally or stream
 
 #load all the relevant datasets 
-# imda1_train = load_dataset("/home/azureuser/azure-whisper-training/loadingScript_imda_part1.py", "CHANNEL1allall", split='train', streaming=True)
-# imda2_train = load_dataset("/home/azureuser/azure-whisper-training/loadingScript_imda_part2.py","CHANNEL1allall", split='train', streaming=True)
-imda4_train = load_dataset("/home/hice1/jho88/scratch/git/train_moba/whisper/hyperparam-tuning/data_loading_script.py","allallall", split='train', streaming=True, trust_remote_code=True)
+imda4_train = load_dataset(dataloader_path,"allallall", split='train', streaming=True, trust_remote_code=True)
 
 #for evaluation we need to randomly select a subset (1000 files) because its too large to evaluate on the whole thing 
-# imda1_test = load_dataset("/home/azureuser/azure-whisper-training/loadingScript_imda_part1.py", "CHANNEL1allall", split='test', streaming=True)
-# imda2_test = load_dataset("/home/azureuser/azure-whisper-training/loadingScript_imda_part2.py", "CHANNEL1allall", split='test', streaming=True)
-imda4_test = load_dataset("/home/hice1/jho88/scratch/git/train_moba/whisper/hyperparam-tuning/data_loading_script.py","allallall", split='test', streaming=True, trust_remote_code=True)
+imda4_test = load_dataset(dataloader_path,"allallall", split='test', streaming=True, trust_remote_code=True)
 
 imda_dataset = IterableDatasetDict()
 imda_dataset["train"] = imda4_train
@@ -117,11 +118,11 @@ model_template.config.use_cache = False
 def objective(trial):
    
     # Define the hyperparameters to tune
-    learning_rate = trial.suggest_loguniform('learning_rate', 1e-6, 1e-4)
-    per_device_train_batch_size = trial.suggest_categorical('per_device_train_batch_size', [16, 32, 64, 128])
+    learning_rate = trial.suggest_loguniform('learning_rate', *learning_rate_range)
+    per_device_train_batch_size = trial.suggest_categorical('per_device_train_batch_size', per_device_train_batch_size_range)
     # num_train_epochs = trial.suggest_int('num_train_epochs', 1, 3, 5)
-    gradient_accumulation_steps = trial.suggest_categorical('gradient_accumulation_steps', [4, 2, 1])
-    max_steps = trial.suggest_categorical('max_steps', [400, 800])
+    gradient_accumulation_steps = trial.suggest_categorical('gradient_accumulation_steps', gradient_accumulation_steps_range)
+    max_steps = trial.suggest_categorical('max_steps', max_steps_range)
     
     print("Trial", trial.number,
         "bs=", per_device_train_batch_size,
@@ -135,7 +136,7 @@ def objective(trial):
 
     
     training_args = Seq2SeqTrainingArguments(
-        output_dir=f"/home/hice1/jho88/scratch/git/train_moba/whisper/hyperparam-tuning/output/{job_name}",  #RESUME FROM CHECKPOINT use the SAME name as previous run and SAME hyperparameters
+        output_dir=os.path.join(output_dir, job_name),  #RESUME FROM CHECKPOINT use the SAME name as previous run and SAME hyperparameters
  #    resume_from_checkpoint=True, #RESUME FROM CHECKPOINT
     #    overwrite_output_dir = False #RESUME FROM CHECKPOINT 
         per_device_train_batch_size=per_device_train_batch_size,
@@ -158,9 +159,9 @@ def objective(trial):
         metric_for_best_model="wer",
         greater_is_better=False,
         hub_private_repo= True,
-        hub_model_id = f'jayellho/{job_name}',
+        hub_model_id = f'{YOUR_HF_USER_OR_ORG}/{job_name}',
         # hub_strategy='all_checkpoints', #trying with every save 
-        push_to_hub_organization = 'jayellho',
+        push_to_hub_organization = YOUR_HF_USER_OR_ORG,
         push_to_hub=True,
         dataloader_num_workers=4,
     )
@@ -179,9 +180,6 @@ def objective(trial):
 
     # Evaluate the model on the validation dataset
     eval_results = trainer.evaluate(eval_dataset=imda_processed["test"])
-    
-    ## Uncomment below to send report to ray
-    # tune.report(eval_wer=eval_results['eval_wer'])  
 
     # Return the evaluation metric (WER) for Optuna to minimize
     return eval_results['eval_wer']
@@ -190,9 +188,9 @@ def objective(trial):
 def main(): 
     # Create an Optuna study and optimize the objective function
     study = optuna.create_study(
-        study_name="whisper_hptune3",
+        study_name=job_name,
         direction="minimize",
-        storage="sqlite:///whisper_hptune3.db",
+        storage=f"sqlite:///{job_name}.db",
         load_if_exists=True,
     )
     study.optimize(objective, n_trials=8)
@@ -200,7 +198,7 @@ def main():
     # Print the best hyperparameters
     print("Best hyperparameters:", study.best_params)
 
-    with open("best_hyperparams.json", "w") as f:
+    with open("{job_name}.json", "w") as f:
         json.dump(study.best_params, f, indent=2)
 
 if __name__=="__main__":

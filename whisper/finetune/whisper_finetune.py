@@ -13,15 +13,23 @@ from transformers import Seq2SeqTrainer
 import os 
 import huggingface_hub
 import datetime
-# print(transformers.__version__)
-# help(transformers.Seq2SeqTrainingArguments)
-#os.environ['CUDA_VISIBLE_DEVICES'] = '1'
 
-model_name_base = "/home/hice1/jho88/scratch/git/train_moba/whisper/finetune/models/whisper-large-v3-turbo"
+# ======================= EDIT VARS BELOW HERE AS NEEDED ================================
+model_name_base = "./models/whisper-large-v3-turbo"
 # checkpoint_path = "/home/hice1/jho88/scratch/git/train_moba/whisper/finetune/output/whisper-large-v3-turbo-imda-part4-98audios/checkpoint-650"
-# model_name_base = "openai/whisper-large-v2" #specify which whisper model to train 
-# checkpoint_path = "/datadrive/whisper-small-en/checkpoint-150" #RESUME FROM CHECKPOINT
-# checkpoint_path = '/datadrive/htx-whisper-medium-part3-06may23-test400/checkpoint-100'
+
+YOUR_HF_TOKEN = '<YOUR HUGGINGFACE TOKEN HERE'
+YOUR_HF_USER_OR_ORG = '<YOUR HF USER OR ORG HERE>'
+job_name = 'whisper-large-v3-turbo-imda-part4-300aud-32bs-1-0417e-05-gradacc4-4datld-4gpus-16cpus-2400steps'
+output_dir = "./output"
+dataloader_path = "./data_loading_script.py"
+## optuna data space exploration ranges
+learning_rate_range = (1e-6, 1e-4)
+per_device_train_batch_size_range = [16, 32, 64, 128]
+gradient_accumulation_steps_range = [4, 2, 1]
+max_steps_range = [400, 800]
+# ======================= EDIT VARS ABOVE HERE AS NEEDED ================================
+
 
 feature_extractor = WhisperFeatureExtractor.from_pretrained(model_name_base)
 tokenizer = WhisperTokenizer.from_pretrained(model_name_base, language="English", task="transcribe")
@@ -93,22 +101,22 @@ def compute_metrics(pred):
 def main(): 
     gc.collect()
     torch.cuda.empty_cache()
+
+    ## UNCOMMENT THE LINE BELOW TO RUN IN DISTRIBUTED GPUS. ELSE, COMMENT.
     torch.distributed.init_process_group(backend='nccl', init_method='env://', timeout=datetime.timedelta(seconds=2500000)) #added
-    # rank = torch.distributed.get_rank()
-    # world_size = torch.distributed.get_world_size()
-    huggingface_hub.login('<YOUR HUGGINGFACE TOKEN HERE>') # if this is commented out, run this in CLI first: huggingface-cli login
-    #imda_dataset = load_dataset('racheltlw/imda_part2_c0_test2')
-    #imda_dataset = load_dataset('audiofolder', data_dir = 'imda_part2_c0_test2') #load the relevant data here either locally or stream
+
+    huggingface_hub.login(YOUR_HF_TOKEN) # if this is commented out, run this in CLI first: huggingface-cli login
+
     
     #load all the relevant datasets 
     # imda1_train = load_dataset("/home/azureuser/azure-whisper-training/loadingScript_imda_part1.py", "CHANNEL1allall", split='train', streaming=True)
 # imda2_train = load_dataset("/home/azureuser/azure-whisper-training/loadingScript_imda_part2.py","CHANNEL1allall", split='train', streaming=True)
-    imda4_train = load_dataset("/home/hice1/jho88/scratch/git/train_moba/whisper/finetune/data_loading_script.py","allallall", split='train', streaming=True, trust_remote_code=True)
+    imda4_train = load_dataset(dataloader_path,"allallall", split='train', streaming=True, trust_remote_code=True)
 
     #for evaluation we need to randomly select a subset (1000 files) because its too large to evaluate on the whole thing 
     # imda1_test = load_dataset("/home/azureuser/azure-whisper-training/loadingScript_imda_part1.py", "CHANNEL1allall", split='test', streaming=True)
     # imda2_test = load_dataset("/home/azureuser/azure-whisper-training/loadingScript_imda_part2.py", "CHANNEL1allall", split='test', streaming=True)
-    imda4_test = load_dataset("/home/hice1/jho88/scratch/git/train_moba/whisper/finetune/data_loading_script.py","allallall", split='test', streaming=True, trust_remote_code=True)
+    imda4_test = load_dataset(dataloader_path,"allallall", split='test', streaming=True, trust_remote_code=True)
     
     # imda4_train = imda4_train.shard(num_shards=world_size, index=rank)
     # imda4_test  = imda4_test.shard( num_shards=world_size, index=rank)   
@@ -164,10 +172,9 @@ def main():
     model.config.suppress_tokens = []
     model.config.use_cache = False
     # change to a repo name of your choice, when continuing from checkpoint use the SAME name where checkpoints are contained  
-    job_name = 'whisper-large-v3-turbo-imda-part4-300aud-32bs-1-0417e-05-gradacc4-4datld-4gpus-16cpus-2400steps'
     training_args = Seq2SeqTrainingArguments(
         accelerator_config={"dispatch_batches": True, "split_batches": True}, #  "
-        output_dir=f"/home/hice1/jho88/scratch/git/train_moba/whisper/finetune/output/{job_name}",  #RESUME FROM CHECKPOINT use the SAME name as previous run and SAME hyperparameters
+        output_dir=os.path.join(output_dir, job_name),  #RESUME FROM CHECKPOINT use the SAME name as previous run and SAME hyperparameters
  #    resume_from_checkpoint=True, #RESUME FROM CHECKPOINT
     #    overwrite_output_dir = False #RESUME FROM CHECKPOINT 
         per_device_train_batch_size=32,
@@ -192,10 +199,10 @@ def main():
         metric_for_best_model="wer",
         greater_is_better=False,
         hub_private_repo= True,
-        hub_model_id = f'jayellho/{job_name}',
+        hub_model_id = f'{YOUR_HF_USER_OR_ORG}/{job_name}',
         # hub_strategy="end",
         # hub_strategy='all_checkpoints', #trying with every save 
-        push_to_hub_organization = 'jayellho',
+        push_to_hub_organization = YOUR_HF_USER_OR_ORG,
         push_to_hub=True,
 
         # DataLoader tuning:

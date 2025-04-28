@@ -1,6 +1,7 @@
-**/data/*
+
 **/models/*
-**/evaluation_data/*
+*.wav
+*.TextGrid
 **/models_to_eval/*
 **/output/whisper*
 **/output/hptune*
