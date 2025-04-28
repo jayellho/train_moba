@@ -1,2 +1,6 @@
 **/data/*
 **/models/*
+**/evaluation_data/*
+**/models_to_eval/*
+**/output/whisper*
+**/output/hptune*
