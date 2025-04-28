@@ -5,7 +5,7 @@ This repository provides scripts and instructions to hyperparameter-tune and fin
 ## Datasets:
 - Please ensure they go into the same folder structure as this repository - they are already arranged accordingly.
 - Access here: 
-https://gatech.box.com/s/k7tbfki3meo10w87c7z6gtv6pi3qsdk3
+https://gatech.box.com/s/dgo7gt78eiu9vtwnxtq3zozqhwezncap
 
 
 ## Models:
