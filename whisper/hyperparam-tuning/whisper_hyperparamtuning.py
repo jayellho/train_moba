@@ -17,17 +17,18 @@ import os
 import huggingface_hub
 import datetime
 import copy
+import json
 
 # *************** NOTE: DO EDIT THE ARGUMENTS IN Seq2SeqTrainingArguments IF NEEDED.******************
 # ======================= EDIT VARS BELOW HERE AS NEEDED ================================
 YOUR_HF_TOKEN = '<YOUR HUGGINGFACE TOKEN HERE'
 YOUR_HF_USER_OR_ORG = '<YOUR HF USER OR ORG HERE>'
 model_name_base = "../finetune/models/whisper-large-v3-turbo"
-job_name = "hptune-3"
+job_name = "hptune-4"
 output_dir = "./output"
 dataloader_path = "./data_loading_script.py"
 ## optuna data space exploration ranges
-learning_rate_range = (1e-6, 1e-4)
+learning_rate_range = (1e-7, 1e-3)
 per_device_train_batch_size_range = [16, 32, 64, 128]
 gradient_accumulation_steps_range = [4, 2, 1]
 max_steps_range = [400, 800]
@@ -198,7 +199,7 @@ def main():
     # Print the best hyperparameters
     print("Best hyperparameters:", study.best_params)
 
-    with open("{job_name}.json", "w") as f:
+    with open(f"{job_name}.json", "w") as f:
         json.dump(study.best_params, f, indent=2)
 
 if __name__=="__main__":

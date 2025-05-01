@@ -29,6 +29,21 @@ _LICENSE = ""
 
 _PATH_TO_DATA = './data/PART4'
 
+_DESCRIPTION = """\
+PART 4 contains code-switching
+The National Speech Corpus (NSC) is the first large-scale Singapore English corpus 
+spearheaded by the Info-communications and Media Development Authority (IMDA) of Singapore.
+
+Summary of Part 4 data organisation:
+- Codeswitching
+   - Same Room environment, files organized by speaker number:
+    /Scripts Same Room: Orthographic transcripts saved in TextGrid format
+    /Audio Same Room: Audio files in WAV format recorded using the mobile phone mic, sampled at 16kHz
+   - Different Room environment, files organized by speaker number and session number:
+    /Scripts Diff Room: Orthographic transcripts saved in TextGrid format 
+    /Audio Diff Room: Audio files in WAV format recorded using the mobile phone, sampled at 16kHz
+"""
+
 # set the maximum length of spliced clips
 INTERVAL_MAX_LENGTH = 25
 
@@ -174,22 +189,6 @@ def read_textgrid(script_path):
     except Exception as e:
         print(f"error reading textgrid file, {script_path}, {str(e)}")
 
-  
-
-_DESCRIPTION = """\
-PART 4 contains code-switching
-The National Speech Corpus (NSC) is the first large-scale Singapore English corpus 
-spearheaded by the Info-communications and Media Development Authority (IMDA) of Singapore.
-
-Summary of Part 4 data organisation:
-- Codeswitching
-   - Same Room environment, files organized by speaker number:
-    /Scripts Same Room: Orthographic transcripts saved in TextGrid format
-    /Audio Same Room: Audio files in WAV format recorded using the mobile phone mic, sampled at 16kHz
-   - Different Room environment, files organized by speaker number and session number:
-    /Scripts Diff Room: Orthographic transcripts saved in TextGrid format 
-    /Audio Diff Room: Audio files in WAV format recorded using the mobile phone, sampled at 16kHz
-"""
 class PART4Config(datasets.BuilderConfig):
     """BuilderConfig"""
 
@@ -208,7 +207,6 @@ class PART4Config(datasets.BuilderConfig):
         self.homepage = homepage
         self.path_to_data = path_to_data
 
-
 def _build_config(channel, gender, race):
     return PART4Config(
         channel=channel,
@@ -221,7 +219,7 @@ def _build_config(channel, gender, race):
 
 class PART4Dataset(datasets.GeneratorBasedBuilder):
     """
-    This dataset returns a spliced 20-25 second audio clip together with the transcript, channel, gender, race, name of the audio fileand the time interval.
+    This dataset returns a spliced 20-25 second audio clip together with the transcript, channel, gender, race, name of the audio file and the time interval.
     """
 
     VERSION = datasets.Version("1.0.0")

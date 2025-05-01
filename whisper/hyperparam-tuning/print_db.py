@@ -3,8 +3,8 @@ import pandas as pd
 
 # 1. Load the study from the SQLite file
 study = optuna.load_study(
-    study_name="whisper_hptune",
-    storage="sqlite:///whisper_hptune.db"
+    study_name="hptune-4",
+    storage="sqlite:///hptune-4.db"
 )
 
 # 2. Print the best parameters and best objective value

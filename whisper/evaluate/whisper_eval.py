@@ -12,7 +12,7 @@ from transformers import WhisperProcessor, WhisperForConditionalGeneration
 MODEL_PARENT_DIR   = "models_to_eval"
 
 # Path to your custom data-loading script (the .py defining PART4Dataset)
-DATA_LOADING_SCRIPT = "./data_loading_script.py"
+DATA_LOADING_SCRIPT = "./data_loading_script_eval.py"
 DATA_CONFIG_NAME    = "allallall"
 DATA_SPLIT          = "train"    # "train" or "test" per your builder
 TRUST_REMOTE_CODE   = True      # needed for custom script
@@ -20,7 +20,7 @@ TRUST_REMOTE_CODE   = True      # needed for custom script
 BATCH_SIZE    = 8
 DEVICE        = "cuda"         # or "cpu"
 MAX_SAMPLES   = None           # or an int to limit eval set size
-OUTPUT_EXCEL  = "wer_results_noengspec.xlsx"
+OUTPUT_EXCEL  = "wer_results.xlsx"
 
 # ======================= EDIT VARS ABOVE HERE AS NEEDED ================================
 
@@ -28,13 +28,14 @@ def evaluate_model(model_path):
     # Load metric, processor, and model
     wer_metric = evaluate.load("wer")
     processor = WhisperProcessor.from_pretrained(model_path,
-                                                language="English",
+                                                # language="English",
                                                 task="transcribe")
     model = WhisperForConditionalGeneration.from_pretrained(model_path)
     model.config.forced_decoder_ids = None
     model.config.suppress_tokens = []
     model.generation_config.forced_decoder_ids = None
     model.generation_config.suppress_tokens    = []
+    # model.generation_config.language = "auto"
     model.config.use_cache = False
     model.to(DEVICE).eval()
 

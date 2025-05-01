@@ -27,7 +27,7 @@ _HOMEPAGE = "https://www.imda.gov.sg/how-we-can-help/national-speech-corpus"
 
 _LICENSE = ""
 
-_PATH_TO_DATA = './data/PART4'
+_PATH_TO_DATA = './evaluation_data'
 
 # set the maximum length of spliced clips
 INTERVAL_MAX_LENGTH = 25
@@ -290,7 +290,7 @@ class PART4Dataset(datasets.GeneratorBasedBuilder):
                 # print("X {}".format(X))
                 if len(X) == 0:
                     continue
-                X_train, X_test = train_test_split(X, test_size=0.3, random_state=42, shuffle=True)
+                X_train, X_test = X.copy(), X.copy()
                 train_speaker_ids.extend(X_train["Speaker ID"])
                 test_speaker_ids.extend(X_test["Speaker ID"])
         
